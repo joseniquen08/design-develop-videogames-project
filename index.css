@@ -1,3 +1,7 @@
 * {
     font-family: "Nunito", sans-serif;
 }
+
+canvas {
+    border-radius: 10px;
+}
