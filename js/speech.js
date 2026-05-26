@@ -29,7 +29,7 @@ function setupSpeech() {
         if (txt.includes('reanudar')) game.paused = false;
     };
 
-    rec.onerror = () => { try { rec.start(); } catch(e){} };
+    rec.onerror = (e) => { if (e.error !== 'not-allowed') { try { rec.start(); } catch(e){} } };
     rec.onend   = () => { try { rec.start(); } catch(e){} };
 
     try { rec.start(); } catch(e) {}

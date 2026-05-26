@@ -19,6 +19,8 @@ let initialState = {
 
         game.physics.arcade.enable(mainBoat);
 
+        document.getElementById('grau-face').style.display = 'block';
+
         createEnemy();
         createBullet();
         setupSpeech();
@@ -44,5 +46,6 @@ let initialState = {
     }
 };
 
+game.state.add('menu', menuState);
 game.state.add('main', initialState);
-game.state.start('main');
+game.state.start('menu');
