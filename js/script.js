@@ -1,13 +1,15 @@
 let game = new Phaser.Game(1717, 916, Phaser.CANVAS, 'bloque_juego');
 
+let background;
+
 let initialState = {
     preload: () => {
-        game.load.image('background', 'img/fondo/ocean-background.png');
+        game.load.image('background', 'img/fondo/ocean-background-3.png');
         game.load.spritesheet('mainBoat', 'img/personaje-principal/barco/huascar_sprite_sheet.png', 360, 360);
         game.load.spritesheet('enemyBoat', 'img/enemigos/sprite_sheet_barco_chileno.png', 460, 384);
     },
     create: () => {
-        game.add.tileSprite(0, 0, 1717, 916, 'background');
+        background = game.add.tileSprite(0, 0, 1717, 916, 'background');
         game.physics.startSystem(Phaser.Physics.ARCADE);
 
         mainBoat = game.add.sprite(game.width / 2, game.height / 2, 'mainBoat');
@@ -21,7 +23,7 @@ let initialState = {
 
         createEnemy();
         createBullet();
-        setupSpeech();
+        // setupSpeech();
         updateGrauFace();
 
         rightKey = game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);
@@ -31,8 +33,19 @@ let initialState = {
         spaceKey = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
     },
     update: () => {
-        if (rightKey.isDown){ mainBoat.position.x += 2; mainBoat.animations.play('right'); mainBoat.scale.x = -1; }
-        else if (leftKey.isDown) { mainBoat.position.x -= 2; mainBoat.scale.x = 1; }
+        
+
+        if (rightKey.isDown) { 
+            background.tilePosition.x -= 0.8;
+            mainBoat.position.x += 2;
+            mainBoat.animations.play('right');
+            mainBoat.scale.x = -1;
+        }
+        else if (leftKey.isDown) { 
+            mainBoat.position.x -= 2;
+            mainBoat.scale.x = 1;
+            background.tilePosition.x += 0.8;
+        }
         else if (upKey.isDown && mainBoat.position.y > 400) mainBoat.position.y -= 2;
         else if (downKey.isDown)                          mainBoat.position.y += 2;
 
