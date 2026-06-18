@@ -540,26 +540,32 @@ function setupFa1Voice() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) return;
 
-    const rec = new SpeechRecognition();
-    rec.lang = 'es-PE';
-    rec.continuous = true;
-    rec.interimResults = false;
+    function startSession() {
+        if (game.state.current !== 'firstAct') return;
 
-    rec.onresult = (e) => {
-        const txt = e.results[e.results.length - 1][0].transcript.toLowerCase().trim();
-        if (txt.includes('pausa')) { pauseFa1(); return; }
-        if (txt.includes('continuar')) { resumeFa1(); return; }
-        if ((txt.includes('fuego') || txt.includes('dispara')) && !fa1PlayerBulletActive && !fa1Dead && !fa1Paused) {
-            fireFa1PlayerBullet();
-        }
-    };
+        const rec = new SpeechRecognition();
+        rec.lang = 'es-PE';
+        rec.continuous = false;
+        rec.interimResults = false;
 
-    rec.onerror = () => { try { rec.start(); } catch (e) { } };
-    rec.onend = () => {
-        if (game.state.current === 'firstAct') {
-            try { rec.start(); } catch (e) { }
-        }
-    };
+        rec.onresult = (e) => {
+            const txt = e.results[0][0].transcript.toLowerCase().trim();
+            if (txt.includes('pausa')) { pauseFa1(); return; }
+            if (txt.includes('continuar')) { resumeFa1(); return; }
+            if ((txt.includes('fuego') || txt.includes('dispara')) && !fa1PlayerBulletActive && !fa1Dead && !fa1Paused) {
+                fireFa1PlayerBullet();
+            }
+        };
 
-    try { rec.start(); } catch (e) { }
+        rec.onerror = (ev) => {
+            const delay = (ev.error === 'no-speech' || ev.error === 'aborted') ? 200 : 400;
+            setTimeout(startSession, delay);
+        };
+
+        rec.onend = () => { setTimeout(startSession, 200); };
+
+        try { rec.start(); } catch (e) { setTimeout(startSession, 300); }
+    }
+
+    startSession();
 }

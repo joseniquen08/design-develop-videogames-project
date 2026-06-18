@@ -277,24 +277,30 @@ function setupScene3Voice() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) return;
 
-    const rec = new SpeechRecognition();
-    rec.lang = 'es-PE';
-    rec.continuous = true;
-    rec.interimResults = false;
+    function startSession() {
+        if (game.state.current !== 'scene3') return;
 
-    rec.onresult = (e) => {
-        const txt = e.results[e.results.length - 1][0].transcript.toLowerCase().trim();
-        if (txt.includes('continuar') || txt.includes('siguiente')) {
-            advanceScene3Dialogue();
-        }
-    };
+        const rec = new SpeechRecognition();
+        rec.lang = 'es-PE';
+        rec.continuous = false;
+        rec.interimResults = false;
 
-    rec.onerror = () => { try { rec.start(); } catch (e) { } };
-    rec.onend = () => {
-        if (game.state.current === 'scene3') {
-            try { rec.start(); } catch (e) { }
-        }
-    };
+        rec.onresult = (e) => {
+            const txt = e.results[0][0].transcript.toLowerCase().trim();
+            if (txt.includes('continuar') || txt.includes('siguiente')) {
+                advanceScene3Dialogue();
+            }
+        };
 
-    try { rec.start(); } catch (e) { }
+        rec.onerror = (ev) => {
+            const delay = (ev.error === 'no-speech' || ev.error === 'aborted') ? 200 : 400;
+            setTimeout(startSession, delay);
+        };
+
+        rec.onend = () => { setTimeout(startSession, 200); };
+
+        try { rec.start(); } catch (e) { setTimeout(startSession, 300); }
+    }
+
+    startSession();
 }
