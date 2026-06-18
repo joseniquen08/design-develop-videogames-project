@@ -258,7 +258,7 @@ function startBattleEntrance() {
         .onComplete.add(() => {
             // Ambas flotas llegaron a sus posiciones de combate
             game.time.events.add(400, () => {
-                game.state.start('main');
+                game.state.start('firstAct');
             });
         });
 }
