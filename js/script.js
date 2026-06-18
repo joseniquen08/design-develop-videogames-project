@@ -23,7 +23,7 @@ let bootState = {
         game.scale.setMinMax(400, 214, 1717, 916);
         game.scale.onSizeChange.add(syncHUD);
         setTimeout(syncHUD, 50);
-        game.state.start('intro');
+        game.state.start('menu');
     }
 };
 
@@ -97,6 +97,7 @@ let initialState = {
 };
 
 game.state.add('boot', bootState);
+game.state.add('menu', menuState);
 game.state.add('intro', introState);
 game.state.add('scene1', scene1State);
 game.state.add('scene2', scene2State);

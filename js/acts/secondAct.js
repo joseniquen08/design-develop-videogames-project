@@ -31,9 +31,10 @@ let main2State = {
 
     create: () => {
         // Reiniciar estado de oleadas
+        const diff = window.DIFFICULTY_SETTINGS[window.gameDifficulty || 'normal'];
         waveEnemyCount = 3;
-        waveEnemySpeed = 80;
-        waveEnemyFireRate = 2500;
+        waveEnemySpeed = Math.round(80 * diff.speedMult);
+        waveEnemyFireRate = Math.round(2500 * diff.fireRateMult);
         main2Wave = 1;
         main2HP = 100;
         main2Dead = false;

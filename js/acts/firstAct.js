@@ -304,6 +304,7 @@ function toggleFa1Pause() {
 
 function spawnFa1Wave() {
     const cfg = fa1WaveConfigs[Math.min(fa1Wave - 1, 2)];
+    const diff = window.DIFFICULTY_SETTINGS[window.gameDifficulty || 'normal'];
     fa1EnemiesInWave = cfg.count;
 
     for (let i = 0; i < fa1EnemiesInWave; i++) {
@@ -318,8 +319,8 @@ function spawnFa1Wave() {
         e.width = 300; e.height = 250;
         e.animations.add('move', [0, 1, 2, 3], 6, true);
         e.animations.play('move');
-        e.body.velocity.x = -cfg.speed;
-        e.fireTimer = cfg.fireRate + Phaser.Math.between(0, 1500);
+        e.body.velocity.x = -Math.round(cfg.speed * diff.speedMult);
+        e.fireTimer = Math.round(cfg.fireRate * diff.fireRateMult) + Phaser.Math.between(0, 1500);
     }
 
     let waveEl = document.getElementById('wave-counter');
