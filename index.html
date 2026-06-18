@@ -16,10 +16,25 @@
         <div id="bloque_juego"></div>
     </div>
 
-    <div class="absolute z-10 top-[1.5rem] left-[3rem] w-[20%] flex flex-col" id="hud-in-game">
+    <!-- HUD acto 1 (main) -->
+    <div class="absolute z-10 top-[1.5rem] left-[6.5rem] w-[20%] flex flex-col" id="hud-in-game">
         <div class="w-[16rem] h-[14rem] rounded-lg py-4 px-2 w-full flex justify-start align-left">
-            <img id="grau-face" src="" class="w-full h-full object-contain"
+            <img id="grau-face" src="" class=" object-contain"
                 style="image-rendering: pixelated;">
+        </div>
+    </div>
+
+    <!-- HUD acto final (main2) -->
+    <div class="absolute z-10 top-[1.5rem] left-[6.5rem] flex flex-col gap-1" id="hud-main2" style="display:none">
+        <div class="w-[14rem] h-[12rem] rounded-lg py-2 px-2 flex justify-start">
+            <img id="grau-face-2" src="img/personaje-principal/cara/sprite-miguel-grau-normal.png"
+                class="object-contain" style="image-rendering: pixelated;">
+        </div>
+        <div id="wave-counter" class="text-white font-bold text-lg px-2 drop-shadow"
+            style="font-family:monospace">Oleada 1</div>
+        <div class="mx-2 h-4 rounded-full overflow-hidden" style="background:#333;width:13rem">
+            <div id="hp-bar" class="h-full rounded-full transition-all"
+                style="width:100%;background:#e53e3e"></div>
         </div>
     </div>
 
@@ -32,6 +47,10 @@
     <script src="js/scenes/intro.js"></script>
     <script src="js/scenes/scene1.js"></script>
     <script src="js/scenes/scene2.js"></script>
+    <script src="js/scenes/intro2.js"></script>
+    <script src="js/scenes/scene3.js"></script>
+    <script src="js/acts/secondAct.js"></script>
+    <script src="js/ending.js"></script>
     <script src="js/script.js"></script>
 </body>
 </html>
