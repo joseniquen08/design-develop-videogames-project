@@ -18,9 +18,9 @@ const BATTLE_POSITIONS = {
     enemyY: 916 / 2
 };
 
-// Configuración de dificultad — el baseline actual (speedMult=1, fireRateMult=1) = 'dificil'
+// speedMult/fireRateMult = enemigos | playerSpeedMult = jugador | damageTakenMult = daño recibido | bossHPMult = HP del boss
 window.DIFFICULTY_SETTINGS = {
-    facil:   { speedMult: 0.50, fireRateMult: 1.70 },
-    normal:  { speedMult: 0.75, fireRateMult: 1.30 },
-    dificil: { speedMult: 1.0,  fireRateMult: 1.0 }
+    facil:   { speedMult: 0.50, fireRateMult: 1.70, playerSpeedMult: 1.3, damageTakenMult: 0.6, bossHPMult: 0.6 },
+    normal:  { speedMult: 0.75, fireRateMult: 1.30, playerSpeedMult: 1.0, damageTakenMult: 1.0, bossHPMult: 1.0 },
+    dificil: { speedMult: 1.0,  fireRateMult: 1.0,  playerSpeedMult: 0.85, damageTakenMult: 1.5, bossHPMult: 2.0 }
 };
