@@ -1,6 +1,8 @@
 // Variable global de dificultad — la leen firstAct.js y secondAct.js
 window.gameDifficulty = 'normal';
 
+let menuMusic;
+
 // Estado interno del menú
 let menuActiveScreen = 'main';
 let menuMainElements   = [];
@@ -12,6 +14,9 @@ let menuShip = null;
 let menuShipBaseY = 0;
 let menuMusicVolume = 0.15;
 let menuSfxVolume   = 0.5;
+
+let menuEnemyShips   = [];
+let menuEsmeraldaShip = null;
 
 function menuClearAll() {
     menuMainElements.forEach(e => e.destroy());
@@ -44,7 +49,7 @@ function menuShowMainScreen() {
     menuClearAll();
 
     // Título
-    let title = game.add.text(1717 / 2, 120, 'COMBATE NAVAL\nDE ANGAMOS', {
+    let title = game.add.text(1717 / 2, 120, 'CRÓNICAS DEL CABALLERO \nDE LOS MARES', {
         font: 'bold 64px Georgia',
         fill: '#c8a94a',
         align: 'center'
@@ -53,7 +58,7 @@ function menuShowMainScreen() {
     menuMainElements.push(title);
 
     // Subtítulo
-    let sub = game.add.text(1717 / 2, 220, 'El Caballero de los Mares', {
+    let sub = game.add.text(1717 / 2, 220, 'David Saavedra | Nicole Nacavilca | Abish Parraga | José Ñiquen', {
         font: 'italic 28px Georgia',
         fill: '#aaaaaa',
         align: 'center'
@@ -98,8 +103,7 @@ function menuShowDifficultyScreen() {
         let y = 300 + i * 90;
 
         let btn = menuCreateButton(400, y, d.label, () => {
-            window.gameDifficulty = d.value;
-            game.state.start('intro');
+            menuStartGame(d.value);
         });
         menuDifficultyElements.push(btn);
 
@@ -192,13 +196,81 @@ function menuShowSettingsScreen() {
     menuSettingsElements.push(backBtn);
 }
 
+function menuStartGame(difficulty) {
+    window.gameDifficulty = difficulty;
+    if (menuMusic && menuMusic.isPlaying) menuMusic.stop();
+    game.state.start('intro');
+}
+
+function setupMenuVoice() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
+    function startSession() {
+        if (game.state.current !== 'menu') return;
+
+        const rec = new SpeechRecognition();
+        rec.lang = 'es-PE';
+        rec.continuous = false;
+        rec.interimResults = false;
+
+        rec.onresult = (ev) => {
+            const txt = ev.results[0][0].transcript.toLowerCase().trim();
+
+            if (menuActiveScreen === 'main') {
+                if (txt.includes('iniciar') || txt.includes('jugar')) { menuShowDifficultyScreen(); return; }
+                if (txt.includes('configur')) { menuShowSettingsScreen(); return; }
+            }
+
+            if (menuActiveScreen === 'difficulty') {
+                if (txt.includes('fácil') || txt.includes('facil'))    { menuStartGame('facil');   return; }
+                if (txt.includes('normal'))                             { menuStartGame('normal');  return; }
+                if (txt.includes('difícil') || txt.includes('dificil')) { menuStartGame('dificil'); return; }
+                if (txt.includes('volver')) { menuShowMainScreen(); return; }
+            }
+
+            if (menuActiveScreen === 'settings') {
+                if (txt.includes('volver')) { menuShowMainScreen(); return; }
+                const musicWord  = txt.includes('música') || txt.includes('musica');
+                const efectoWord = txt.includes('efecto');
+                const up   = txt.includes('subir') || txt.includes('más') || txt.includes('mas');
+                const down = txt.includes('bajar') || txt.includes('menos');
+                if (musicWord && up)   { menuMusicVolume = Math.min(1, +(menuMusicVolume + 0.1).toFixed(1)); if (typeof bgMusic !== 'undefined' && bgMusic) bgMusic.volume = menuMusicVolume; menuShowSettingsScreen(); return; }
+                if (musicWord && down) { menuMusicVolume = Math.max(0, +(menuMusicVolume - 0.1).toFixed(1)); if (typeof bgMusic !== 'undefined' && bgMusic) bgMusic.volume = menuMusicVolume; menuShowSettingsScreen(); return; }
+                if (efectoWord && up)   { menuSfxVolume = Math.min(1, +(menuSfxVolume + 0.1).toFixed(1)); menuShowSettingsScreen(); return; }
+                if (efectoWord && down) { menuSfxVolume = Math.max(0, +(menuSfxVolume - 0.1).toFixed(1)); menuShowSettingsScreen(); return; }
+            }
+        };
+
+        rec.onerror = (ev) => {
+            const delay = (ev.error === 'no-speech' || ev.error === 'aborted') ? 200 : 400;
+            setTimeout(startSession, delay);
+        };
+
+        rec.onend = () => { setTimeout(startSession, 200); };
+
+        try { rec.start(); } catch (e) { setTimeout(startSession, 300); }
+    }
+
+    startSession();
+}
+
 let menuState = {
     preload: () => {
-        game.load.image('menuOcean', 'img/fondo/ocean-background-3.png');
-        game.load.spritesheet('menuHuascar', 'img/personaje-principal/barco/huascar_sprite_sheet.png', 360, 360);
+        game.load.image('menuOcean',      'img/fondo/ocean-background-3.png');
+        game.load.spritesheet('menuHuascar',   'img/personaje-principal/barco/huascar_sprite_sheet.png', 360, 360);
+        game.load.spritesheet('menuChileno',   'img/enemigos/sprite_sheet_barco_chileno-2.png', 690, 576);
+        game.load.spritesheet('menuEsmeralda', 'img/enemigos/esmeralda-sprite-sheet.png', 384, 192);
+        game.load.audio('menuMusic', 'audio/menu-background-sound.mp3');
     },
 
     create: () => {
+        setupMenuVoice();
+        menuMusic = game.add.audio('menuMusic');
+        menuMusic.loop = true;
+        menuMusic.volume = 1;
+        menuMusic.play();
+        
         // Ocultar HUDs
         let hud1 = document.getElementById('grau-face');
         if (hud1) hud1.style.display = 'none';
@@ -210,8 +282,35 @@ let menuState = {
         menuOceanBg = game.add.tileSprite(0, 0, 1717, 916, 'menuOcean');
         menuOceanBg.autoScroll(-15, 0);
 
-        // 2. Barco decorativo con animación — posicionado debajo de todo el UI
-        menuShip = game.add.sprite(1717 / 2, 820, 'menuHuascar');
+        menuEnemyShips = [];
+        const enemyLanes = [
+            { x: 1717 + 100,  y: 680, speed: 1.4, scale: 0.85 },
+            { x: 1717 + 600,  y: 820, speed: 1.7, scale: 1.0  },
+            { x: 1717 + 1100, y: 730, speed: 1.2, scale: 0.75 },
+        ];
+        enemyLanes.forEach(cfg => {
+            let s = game.add.sprite(cfg.x, cfg.y, 'menuChileno');
+            s.anchor.setTo(0.5);
+            s.scale.x = -1;
+            s.width  = Math.round(300 * cfg.scale);
+            s.height = Math.round(250 * cfg.scale);
+            s.animations.add('move', [0, 1, 2, 3], 6, true);
+            s.animations.play('move');
+            s._menuSpeed = cfg.speed;
+            menuEnemyShips.push(s);
+        });
+
+        // Esmeralda — más lenta y grande, entra después
+        menuEsmeraldaShip = game.add.sprite(1717 + 800, 750, 'menuEsmeralda');
+        menuEsmeraldaShip.anchor.setTo(0.5);
+        menuEsmeraldaShip.scale.x = -1;
+        menuEsmeraldaShip.width  = 500;
+        menuEsmeraldaShip.height = 250;
+        menuEsmeraldaShip.animations.add('move', [0, 1, 2, 3, 4], 6, true);
+        menuEsmeraldaShip.animations.play('move');
+
+        // 2b. Barco del jugador (Huáscar) — decorativo en zona inferior
+        menuShip = game.add.sprite(1717 / 2, 320, 'menuHuascar');
         menuShip.anchor.setTo(0.5);
         menuShip.scale.x = -1;
         menuShip.width = 200;
@@ -219,7 +318,7 @@ let menuState = {
         menuShip.frame = 1;
         menuShip.animations.add('right', [0, 1, 2, 3], 8, true);
         menuShip.animations.play('right');
-        menuShipBaseY = 820;
+        menuShipBaseY = 320;
 
         // 3. Overlay negro semitransparente
         menuOverlay = game.add.graphics();
@@ -232,9 +331,27 @@ let menuState = {
     },
 
     update: () => {
-        // Barco decorativo: balanceo sinusoidal
+        // Barco del jugador: balanceo sinusoidal
         if (menuShip) {
-            menuShip.y = menuShipBaseY + Math.sin(game.time.now * 0.001) * 8;
+            menuShip.y = menuShipBaseY + Math.sin(game.time.now * 0.001) * 20;
+        }
+
+        // Barcos chilenos: avanzan hacia la izquierda y hacen wrap
+        menuEnemyShips.forEach(s => {
+            s.x -= s._menuSpeed;
+            if (s.x < -(s.width / 2 + 50)) {
+                s.x = 1717 + Phaser.Math.between(50, 500);
+                s.y = Phaser.Math.between(640, 840);
+            }
+        });
+
+        // Esmeralda: más lenta
+        if (menuEsmeraldaShip) {
+            menuEsmeraldaShip.x -= 0.7;
+            if (menuEsmeraldaShip.x < -300) {
+                menuEsmeraldaShip.x = 1717 + Phaser.Math.between(100, 400);
+                menuEsmeraldaShip.y = Phaser.Math.between(650, 820);
+            }
         }
     }
 };
