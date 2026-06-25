@@ -20,6 +20,7 @@ let main2PlayerInvincible = false;
 
 let main2RightKey, main2LeftKey, main2UpKey, main2DownKey, main2SpaceKey;
 let main2WKey, main2AKey, main2SKey, main2DKey;
+let main2QKey;
 
 let main2State = {
     preload: () => {
@@ -27,6 +28,11 @@ let main2State = {
         game.load.spritesheet('player-main2', 'img/personaje-principal/barco/huascar_sprite_sheet.png', 360, 360);
         game.load.spritesheet('enemy-main2', 'img/enemigos/sprite_sheet_barco_chileno-2.png', 690, 576);
         game.load.audio('bgMusic2', 'audio/final-act-background-2.m4a');
+        game.load.image('causa', 'img/personaje-principal/vida/causa-vida.png');
+        game.load.spritesheet('cannonball', 'img/personaje-principal/ataque/cannon-sprite-sheet.png', 64, 64);
+        game.load.audio('canonEfecto',    'audio/canon-efecto.mp3');
+        game.load.audio('vozCanones',     'audio/voz-cañones.m4a');
+        game.load.audio('canoonesSonido', 'audio/cañones-sonido.m4a');
     },
 
     create: () => {
@@ -40,10 +46,16 @@ let main2State = {
         main2EnemiesInWave = 0;
         main2PlayerBulletActive = false;
         main2PlayerInvincible = false;
+        specialBarValue = 0;
+        specialReady    = false;
+        specialActive   = false;
+        causaGroup      = null;
 
         let hud = document.getElementById('hud-main2');
         if (hud) hud.style.display = 'flex';
         updateMain2HUD();
+
+        updateSpecialBar();
 
         main2Music = game.add.audio('bgMusic2');
         main2Music.loop = true;
@@ -53,6 +65,10 @@ let main2State = {
         main2Background = game.add.tileSprite(0, 0, 1717, 916, 'bg-main2');
 
         game.physics.startSystem(Phaser.Physics.ARCADE);
+
+        causaGroup = game.add.group();
+        causaGroup.enableBody = true;
+        causaGroup.physicsBodyType = Phaser.Physics.ARCADE;
 
         // Huáscar (jugador)
         main2Player = game.add.sprite(200, 916 / 2, 'player-main2');
@@ -105,7 +121,9 @@ let main2State = {
         main2AKey     = game.input.keyboard.addKey(Phaser.Keyboard.A);
         main2SKey     = game.input.keyboard.addKey(Phaser.Keyboard.S);
         main2DKey     = game.input.keyboard.addKey(Phaser.Keyboard.D);
+        main2QKey     = game.input.keyboard.addKey(Phaser.Keyboard.Q);
 
+        initSpecialSounds();
         setupMain2Voice();
         spawnWave2();
     },
@@ -136,6 +154,9 @@ let main2State = {
         if (main2SpaceKey.justDown && !main2PlayerBulletActive) {
             fireMain2PlayerBullet();
         }
+        if (main2QKey.justDown && specialReady && !specialActive) {
+            activateSpecial(main2Player, [main2Enemies]);
+        }
 
         // Bala del jugador fuera de pantalla
         if (main2PlayerBulletActive && main2PlayerBullet.x > 1800) {
@@ -155,7 +176,7 @@ let main2State = {
                 let dx = e.x - main2Player.x;
                 let dy = e.y - main2Player.y;
                 if (dx * dx + dy * dy < 120 * 120) {
-                    e.kill();
+                    killMain2Enemy(e);
                     takeDamage2(35);
                 }
             }
@@ -182,7 +203,12 @@ let main2State = {
         game.physics.arcade.overlap(main2PlayerBullet, main2Enemies, (pBullet, e) => {
             pBullet.exists = false;
             main2PlayerBulletActive = false;
-            e.kill();
+            killMain2Enemy(e);
+        });
+
+        // Causa Limeña
+        game.physics.arcade.overlap(main2Player, causaGroup, (boat, causa) => {
+            pickupCausa(boat, causa, () => main2HP, (v) => { main2HP = v; }, main2MaxHP, updateMain2HUD);
         });
 
         // Fin de oleada
@@ -192,6 +218,13 @@ let main2State = {
         }
     }
 };
+
+function killMain2Enemy(e) {
+    if (!e || !e.alive) return;
+    let ex = e.x, ey = e.y;
+    e.kill();
+    if (Phaser.Math.between(0, 100) < 35) spawnCausa(ex, ey);
+}
 
 function spawnWave2() {
     main2EnemiesInWave = Math.floor(waveEnemyCount);
@@ -228,6 +261,7 @@ function fireMain2PlayerBullet() {
     main2PlayerBullet.body.velocity.x = 600;
     main2PlayerBullet.body.velocity.y = 0;
     main2PlayerBullet.exists = true;
+    game.sound.play('canonEfecto', 0.6);
 }
 
 function fireMain2EnemyBullet(enemy) {
@@ -319,7 +353,7 @@ function setupMain2Voice() {
     if (!SpeechRecognition) return;
 
     function startSession() {
-        if (game.state.current !== 'main2') return;
+        if (game.state.current !== 'secondAct') return;
 
         const rec = new SpeechRecognition();
         rec.lang = 'es-PE';
@@ -328,6 +362,9 @@ function setupMain2Voice() {
 
         rec.onresult = (e) => {
             const txt = e.results[0][0].transcript.toLowerCase().trim();
+            if ((txt.includes('auxilio') || txt.includes('andanada')) && specialReady && !specialActive && !main2Dead) {
+                activateSpecial(main2Player, [main2Enemies]); return;
+            }
             if ((txt.includes('fuego') || txt.includes('dispara')) && !main2PlayerBulletActive && !main2Dead) {
                 fireMain2PlayerBullet();
             }
