@@ -1,13 +1,13 @@
-let _sndVoz     = null;
+let _sndVoz = null;
 let _sndCanones = null;
 
 function initSpecialSounds() {
-    _sndVoz     = game.add.audio('vozCanones',     0.8);
+    _sndVoz = game.add.audio('vozCanones', 0.8);
     _sndCanones = game.add.audio('canoonesSonido', 0.6);
 }
 
 function updateSpecialBar() {
-    const bar   = document.getElementById('special-bar');
+    const bar = document.getElementById('special-bar');
     const track = document.getElementById('special-bar-track');
     if (!bar) return;
     const pct = (specialBarValue / specialBarMax) * 100;
@@ -25,9 +25,9 @@ function updateSpecialBar() {
 
 function spawnCausa(x, y) {
     if (!causaGroup) return;
-    
+
     let spawnX = Phaser.Math.between(100, 700);
-    let landY  = Phaser.Math.between(Math.floor(game.height * 0.2), Math.floor(game.height * 0.8));
+    let landY = Phaser.Math.between(Math.floor(game.height * 0.2), Math.floor(game.height * 0.8));
     let causa = causaGroup.create(spawnX, -100, 'causa');
     causa.anchor.setTo(0.5);
     causa.width = 80;
@@ -69,7 +69,7 @@ function pickupCausa(boat, causa, getHP, setHP, maxHP, updateHUDFn) {
 
 function activateSpecial(playerSprite, enemyGroups, bossHitConfig) {
     specialActive = true;
-    specialReady  = false;
+    specialReady = false;
     specialBarValue = 0;
     updateSpecialBar();
 
@@ -80,7 +80,7 @@ function activateSpecial(playerSprite, enemyGroups, bossHitConfig) {
         if (_sndCanones) _sndCanones.play(); else game.sound.play('canoonesSonido', 0.6);
         game.camera.shake(0.025, 500);
 
-        let txt = game.add.text(1717 / 2, 916 / 2 - 100, '¡ANDANADA NAVAL!', {
+        let txt = game.add.text(1717 / 2, 916 / 2 - 100, '¡AYUDA NAVAL!', {
             font: 'bold 52px monospace',
             fill: '#ffd700'
         });
@@ -98,59 +98,59 @@ function activateSpecial(playerSprite, enemyGroups, bossHitConfig) {
 
         for (let i = 0; i < 20; i++) {
             game.time.events.add(i * 400, function () {
-            let x    = Phaser.Math.between(80, 1630);
-            let ball = game.add.sprite(x, -60, 'cannonball');
-            ball.anchor.setTo(0.5);
-            ball.width  = 50;
-            ball.height = 50;
-            ball.animations.add('spin', [0, 1, 2, 3, 4, 5], 12, true);
-            ball.animations.play('spin');
+                let x = Phaser.Math.between(80, 1630);
+                let ball = game.add.sprite(x, -60, 'cannonball');
+                ball.anchor.setTo(0.5);
+                ball.width = 50;
+                ball.height = 50;
+                ball.animations.add('spin', [0, 1, 2, 3, 4, 5], 12, true);
+                ball.animations.play('spin');
 
-            // y de aterrizaje aleatorio para cubrir toda la altura del campo
-            let landY = Phaser.Math.between(
-                Math.floor(game.height * 0.1),
-                Math.floor(game.height * 0.9)
-            );
-            game.add.tween(ball)
-                .to({ y: landY }, Phaser.Math.between(500, 800), Phaser.Easing.Quadratic.In, true)
-                .onComplete.add(function () {
-                    let bx = ball.x, by = ball.y;
-                    ball.destroy();
+                // y de aterrizaje aleatorio para cubrir toda la altura del campo
+                let landY = Phaser.Math.between(
+                    Math.floor(game.height * 0.1),
+                    Math.floor(game.height * 0.9)
+                );
+                game.add.tween(ball)
+                    .to({ y: landY }, Phaser.Math.between(500, 800), Phaser.Easing.Quadratic.In, true)
+                    .onComplete.add(function () {
+                        let bx = ball.x, by = ball.y;
+                        ball.destroy();
 
-                    let exp = game.add.graphics();
-                    exp.beginFill(0xff6600, 0.85);
-                    exp.drawCircle(bx, by, 70);
-                    exp.endFill();
+                        let exp = game.add.graphics();
+                        exp.beginFill(0xff6600, 0.85);
+                        exp.drawCircle(bx, by, 70);
+                        exp.endFill();
 
-                    let flash = game.add.graphics();
-                    flash.beginFill(0xffffff, 0.9);
-                    flash.drawCircle(bx, by, 25);
-                    flash.endFill();
+                        let flash = game.add.graphics();
+                        flash.beginFill(0xffffff, 0.9);
+                        flash.drawCircle(bx, by, 25);
+                        flash.endFill();
 
-                    game.add.tween(exp)
-                        .to({ alpha: 0 }, 400, Phaser.Easing.Linear.None, true)
-                        .onComplete.add(() => exp.destroy());
-                    game.add.tween(flash)
-                        .to({ alpha: 0 }, 200, Phaser.Easing.Linear.None, true)
-                        .onComplete.add(() => flash.destroy());
+                        game.add.tween(exp)
+                            .to({ alpha: 0 }, 400, Phaser.Easing.Linear.None, true)
+                            .onComplete.add(() => exp.destroy());
+                        game.add.tween(flash)
+                            .to({ alpha: 0 }, 200, Phaser.Easing.Linear.None, true)
+                            .onComplete.add(() => flash.destroy());
 
-                    game.camera.shake(0.007, 120);
+                        game.camera.shake(0.007, 120);
 
-                    // Radio 350px — enemigos normales: kill directo
-                    enemyGroups.forEach(function (group) {
-                        if (!group) return;
-                        group.forEachAlive(function (e) {
-                            let dx = e.x - bx, dy = e.y - by;
-                            if (dx * dx + dy * dy < 350 * 350) e.kill();
+                        // Radio 350px — enemigos normales: kill directo
+                        enemyGroups.forEach(function (group) {
+                            if (!group) return;
+                            group.forEachAlive(function (e) {
+                                let dx = e.x - bx, dy = e.y - by;
+                                if (dx * dx + dy * dy < 350 * 350) e.kill();
+                            });
                         });
+                        // Boss: daño por mitad de vida (hitFn lo calcula al momento)
+                        if (bossHitConfig && bossHitConfig.sprite && bossHitConfig.sprite.alive) {
+                            let dx = bossHitConfig.sprite.x - bx;
+                            let dy = bossHitConfig.sprite.y - by;
+                            if (dx * dx + dy * dy < 350 * 350) bossHitConfig.hitFn();
+                        }
                     });
-                    // Boss: daño por mitad de vida (hitFn lo calcula al momento)
-                    if (bossHitConfig && bossHitConfig.sprite && bossHitConfig.sprite.alive) {
-                        let dx = bossHitConfig.sprite.x - bx;
-                        let dy = bossHitConfig.sprite.y - by;
-                        if (dx * dx + dy * dy < 350 * 350) bossHitConfig.hitFn();
-                    }
-                });
             });
         }
 
