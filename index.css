@@ -66,15 +66,23 @@ canvas {
     position: absolute;
     top: 24px;
     left: 104px;
-    flex-direction: column;
-    gap: 6px;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
 }
 
 #hud-main2 img {
-    width: 224px;
-    height: 192px;
+    width: 128px;
+    height: 128px;
     object-fit: contain;
     image-rendering: pixelated;
+    flex-shrink: 0;
+}
+
+#hud-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 #wave-counter {
@@ -128,4 +136,31 @@ canvas {
     transition: width 0.3s;
     background: #daa520;
     width: 0%;
+}
+
+#sprint-bar-label {
+    color: #4a90d9;
+    font-family: monospace;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 0 8px;
+    letter-spacing: 1px;
+    filter: drop-shadow(0 1px 3px rgba(0,0,0,0.9));
+}
+
+#sprint-bar-track {
+    margin: 0 8px;
+    height: 16px;
+    border-radius: 9999px;
+    overflow: hidden;
+    background: #333;
+    width: 208px;
+}
+
+#sprint-bar {
+    height: 100%;
+    border-radius: 9999px;
+    transition: width 0.1s;
+    background: #4a90d9;
+    width: 100%;
 }
