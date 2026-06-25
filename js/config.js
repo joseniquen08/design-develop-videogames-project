@@ -5,6 +5,12 @@ let bulletActive = false;
 let mainBoat, enemy, enemyTop, enemyBottom, bullet;
 let rightKey, leftKey, upKey, downKey, spaceKey;
 
+let causaGroup;
+let specialBarValue = 0;
+let specialBarMax   = 4;
+let specialReady    = false;
+let specialActive   = false;
+
 const BATTLE_POSITIONS = {
     mainBoatX: 1717 / 3 - 250,
     mainBoatY: 916 / 2,
