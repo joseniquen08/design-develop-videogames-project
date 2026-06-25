@@ -25,6 +25,7 @@ let fa1PauseKey;
 
 let fa1RightKey, fa1LeftKey, fa1UpKey, fa1DownKey, fa1SpaceKey;
 let fa1WKey, fa1AKey, fa1SKey, fa1DKey;
+let fa1QKey;
 
 const fa1WaveConfigs = [
     { count: 3, speed: 100, fireRate: 2200 },
@@ -37,7 +38,13 @@ let firstActState = {
         game.load.image('bg-fa1', 'img/fondo/ocean-background-3.png');
         game.load.spritesheet('player-fa1', 'img/personaje-principal/barco/huascar_sprite_sheet.png', 360, 360);
         game.load.spritesheet('enemy-fa1', 'img/enemigos/sprite_sheet_barco_chileno-2.png', 690, 576);
+        game.load.spritesheet('boss-fa1',  'img/enemigos/esmeralda-sprite-sheet.png', 384, 192);
         game.load.audio('bgMusicFa1', 'audio/battle-background-sound.mp3');
+        game.load.image('causa', 'img/personaje-principal/vida/causa-vida.png');
+        game.load.spritesheet('cannonball', 'img/personaje-principal/ataque/cannon-sprite-sheet.png', 64, 64);
+        game.load.audio('canonEfecto',    'audio/canon-efecto.mp3');
+        game.load.audio('vozCanones',     'audio/voz-cañones.m4a');
+        game.load.audio('canoonesSonido', 'audio/cañones-sonido.m4a');
     },
 
     create: () => {
@@ -54,20 +61,30 @@ let firstActState = {
         fa1BossEscortTimer = null;
         fa1BossEscortAlt = false;
         fa1BossHPBar = null;
+        specialBarValue = specialBarMax;   // TODO: volver a 0 cuando se deje de probar
+        specialReady    = false;
+        specialActive   = false;
+        causaGroup      = null;
 
         let hud = document.getElementById('hud-main2');
         if (hud) hud.style.display = 'flex';
         hudInGame.style.display = 'none';
         updateFa1HUD();
 
+        updateSpecialBar();
+
         fa1Music = game.add.audio('bgMusicFa1');
         fa1Music.loop = true;
-        fa1Music.volume = 0.15;
+        fa1Music.volume = 0.8;
         fa1Music.play();
 
         fa1Background = game.add.tileSprite(0, 0, 1717, 916, 'bg-fa1');
 
         game.physics.startSystem(Phaser.Physics.ARCADE);
+
+        causaGroup = game.add.group();
+        causaGroup.enableBody = true;
+        causaGroup.physicsBodyType = Phaser.Physics.ARCADE;
 
         // Huáscar
         fa1Player = game.add.sprite(200, 916 / 2, 'player-fa1');
@@ -123,6 +140,7 @@ let firstActState = {
         fa1SKey     = game.input.keyboard.addKey(Phaser.Keyboard.S);
         fa1DKey     = game.input.keyboard.addKey(Phaser.Keyboard.D);
         fa1PauseKey = game.input.keyboard.addKey(Phaser.Keyboard.ESC);
+        fa1QKey     = game.input.keyboard.addKey(Phaser.Keyboard.Q);
 
         // Overlay de pausa — añadido al final para quedar encima de todo
         fa1PauseOverlay = game.add.graphics();
@@ -141,6 +159,7 @@ let firstActState = {
         fa1PauseText.anchor.setTo(0.5);
         fa1PauseText.visible = false;
 
+        initSpecialSounds();
         setupFa1Voice();
         spawnFa1Wave();
     },
@@ -177,6 +196,15 @@ let firstActState = {
 
         // Disparo
         if (fa1SpaceKey.justDown && !fa1PlayerBulletActive) fireFa1PlayerBullet();
+        if (fa1QKey.justDown && specialReady && !specialActive) {
+            activateSpecial(fa1Player, [fa1Enemies, fa1BossEscortGroup], fa1BossPhase && fa1Boss ? {
+                sprite: fa1Boss,
+                hitFn: function () {
+                    let times = Math.ceil(fa1BossHP / 2);
+                    for (let j = 0; j < times; j++) hitFa1Boss();
+                }
+            } : null);
+        }
 
         if (fa1PlayerBulletActive && fa1PlayerBullet.x > 1800) {
             fa1PlayerBullet.exists = false;
@@ -192,7 +220,7 @@ let firstActState = {
             }
             if (!fa1PlayerInvincible) {
                 let dx = e.x - fa1Player.x, dy = e.y - fa1Player.y;
-                if (dx * dx + dy * dy < 120 * 120) { e.kill(); takeDamageFa1(35); }
+                if (dx * dx + dy * dy < 120 * 120) { killFa1Enemy(e); takeDamageFa1(35); }
             }
             if (e.x < -250) e.kill();
         });
@@ -206,7 +234,7 @@ let firstActState = {
             }
             if (!fa1PlayerInvincible) {
                 let dx = e.x - fa1Player.x, dy = e.y - fa1Player.y;
-                if (dx * dx + dy * dy < 110 * 110) { e.kill(); takeDamageFa1(30); }
+                if (dx * dx + dy * dy < 110 * 110) { killFa1Enemy(e); takeDamageFa1(30); }
             }
             if (e.x < -250) e.kill();
         });
@@ -222,12 +250,17 @@ let firstActState = {
 
         // Bala jugador vs oleada
         game.physics.arcade.overlap(fa1PlayerBullet, fa1Enemies, (pBullet, e) => {
-            pBullet.exists = false; fa1PlayerBulletActive = false; e.kill();
+            pBullet.exists = false; fa1PlayerBulletActive = false; killFa1Enemy(e);
         });
 
         // Bala jugador vs escolta boss
         game.physics.arcade.overlap(fa1PlayerBullet, fa1BossEscortGroup, (pBullet, e) => {
-            pBullet.exists = false; fa1PlayerBulletActive = false; e.kill();
+            pBullet.exists = false; fa1PlayerBulletActive = false; killFa1Enemy(e);
+        });
+
+        // Causa Limeña
+        game.physics.arcade.overlap(fa1Player, causaGroup, (boat, causa) => {
+            pickupCausa(boat, causa, () => fa1HP, (v) => { fa1HP = v; }, fa1MaxHP, updateFa1HUD);
         });
 
         // Bala jugador vs boss (manual)
@@ -335,12 +368,12 @@ function startFa1BossPhase() {
     let waveEl = document.getElementById('wave-counter');
     if (waveEl) waveEl.textContent = '¡ESMERALDA!';
 
-    fa1Boss = game.add.sprite(1717 + 300, 916 / 2, 'enemy-fa1');
+    fa1Boss = game.add.sprite(1717 + 300, 916 / 2, 'boss-fa1');
     fa1Boss.anchor.setTo(0.5);
     fa1Boss.scale.x = -1;
-    fa1Boss.width = 500;
-    fa1Boss.height = 420;
-    fa1Boss.animations.add('move', [0, 1, 2, 3], 6, true);
+    fa1Boss.width = 550;
+    fa1Boss.height = 275;
+    fa1Boss.animations.add('move', [0, 1, 2, 3, 4], 6, true);
     fa1Boss.animations.play('move');
     fa1Boss.fireTimer = 3000;
 
@@ -372,6 +405,13 @@ function spawnFa1BossEscort() {
     e.animations.play('move');
     e.body.velocity.x = -130;
     e.fireTimer = 1200 + Phaser.Math.between(0, 800);
+}
+
+function killFa1Enemy(e) {
+    if (!e || !e.alive) return;
+    let ex = e.x, ey = e.y;
+    e.kill();
+    if (Phaser.Math.between(0, 100) < 35) spawnCausa(ex, ey);
 }
 
 function drawFa1BossHPBar() {
@@ -437,6 +477,7 @@ function fireFa1PlayerBullet() {
     fa1PlayerBullet.body.velocity.x = 600;
     fa1PlayerBullet.body.velocity.y = 0;
     fa1PlayerBullet.exists = true;
+    game.sound.play('canonEfecto', 0.6);
 }
 
 function fireFa1EnemyBullet(enemy) {
@@ -552,6 +593,13 @@ function setupFa1Voice() {
             const txt = e.results[0][0].transcript.toLowerCase().trim();
             if (txt.includes('pausa')) { pauseFa1(); return; }
             if (txt.includes('continuar')) { resumeFa1(); return; }
+            if ((txt.includes('auxilio') || txt.includes('andanada')) && specialReady && !specialActive && !fa1Dead && !fa1Paused) {
+                activateSpecial(fa1Player, [fa1Enemies, fa1BossEscortGroup], fa1BossPhase && fa1Boss ? {
+                    sprite: fa1Boss,
+                    hitFn: function () { let t = Math.ceil(fa1BossHP / 2); for (let j = 0; j < t; j++) hitFa1Boss(); }
+                } : null);
+                return;
+            }
             if ((txt.includes('fuego') || txt.includes('dispara')) && !fa1PlayerBulletActive && !fa1Dead && !fa1Paused) {
                 fireFa1PlayerBullet();
             }
