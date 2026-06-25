@@ -22,6 +22,11 @@ let main2RightKey, main2LeftKey, main2UpKey, main2DownKey, main2SpaceKey;
 let main2WKey, main2AKey, main2SKey, main2DKey;
 let main2QKey;
 
+let main2SprintStamina   = 100;
+let main2SprintToggle    = false;
+let main2PlayerSpeed     = 2;
+let main2DamageTakenMult = 1;
+
 let main2State = {
     preload: () => {
         game.load.image('bg-main2', 'img/fondo/ocean-background-3.png');
@@ -51,6 +56,10 @@ let main2State = {
         specialReady    = false;
         specialActive   = false;
         causaGroup      = null;
+        main2SprintStamina   = 100;
+        main2SprintToggle    = false;
+        main2PlayerSpeed     = 2 * diff.playerSpeedMult;
+        main2DamageTakenMult = diff.damageTakenMult;
 
         let hud = document.getElementById('hud-main2');
         if (hud) hud.style.display = 'flex';
@@ -134,18 +143,31 @@ let main2State = {
 
         main2Background.tilePosition.x -= 1;
 
+        // Sprint
+        const m2Moving = main2RightKey.isDown || main2DKey.isDown || main2LeftKey.isDown || main2AKey.isDown ||
+                         main2UpKey.isDown || main2WKey.isDown || main2DownKey.isDown || main2SKey.isDown;
+        const m2Sprinting = (game.input.keyboard.isDown(17) || main2SprintToggle) && main2SprintStamina > 0 && m2Moving;
+        if (m2Sprinting) {
+            main2SprintStamina = Math.max(0, main2SprintStamina - game.time.elapsed * 0.02);
+            if (main2SprintStamina <= 0) main2SprintToggle = false;
+        } else {
+            main2SprintStamina = Math.min(100, main2SprintStamina + game.time.elapsed * 0.01);
+        }
+        updateMain2SprintBar();
+        const m2Speed = m2Sprinting ? main2PlayerSpeed * 2 : main2PlayerSpeed;
+
         // Movimiento del jugador
         if (main2RightKey.isDown || main2DKey.isDown) {
-            main2Player.x += 2;
+            main2Player.x += m2Speed;
             main2Player.animations.play('right');
             main2Player.scale.x = -1;
         } else if ((main2LeftKey.isDown || main2AKey.isDown)  && main2Player.x > 170 ) {
-            main2Player.x -= 2;
+            main2Player.x -= m2Speed;
             main2Player.scale.x = 1;
         } else if ((main2UpKey.isDown || main2WKey.isDown) && main2Player.y > 130 ) {
-            main2Player.y -= 2;
+            main2Player.y -= m2Speed;
         } else if ((main2DownKey.isDown || main2SKey.isDown) && main2Player.y < 830) {
-            main2Player.y += 2;
+            main2Player.y += m2Speed;
         }
 
         main2Player.x = Phaser.Math.clamp(main2Player.x, 0, 800);
@@ -171,6 +193,10 @@ let main2State = {
             if (e.fireTimer <= 0) {
                 e.fireTimer = waveEnemyFireRate + Phaser.Math.between(-300, 300);
                 fireMain2EnemyBullet(e);
+            }
+            // Oleada 5: frenar en la mitad de la pantalla
+            if (e._stopX !== undefined && e.x <= e._stopX) {
+                e.body.velocity.x = 0;
             }
             // Colisión cuerpo a cuerpo manual (evita bugs de arcade.overlap con el jugador)
             if (!main2PlayerInvincible) {
@@ -215,10 +241,19 @@ let main2State = {
         // Fin de oleada
         if (main2EnemiesInWave > 0 && main2Enemies.countLiving() === 0) {
             main2EnemiesInWave = 0;
-            game.time.events.add(1500, nextWave2);
+            if (main2Wave >= 5) {
+                game.time.events.add(1500, victoryWave2);
+            } else {
+                game.time.events.add(1500, nextWave2);
+            }
         }
     }
 };
+
+function updateMain2SprintBar() {
+    let bar = document.getElementById('sprint-bar');
+    if (bar) bar.style.width = main2SprintStamina + '%';
+}
 
 function killMain2Enemy(e) {
     if (!e || !e.alive) return;
@@ -241,6 +276,9 @@ function spawnWave2() {
         e.animations.play('move');
         e.body.velocity.x = -waveEnemySpeed;
         e.fireTimer = waveEnemyFireRate + Phaser.Math.between(0, 1500);
+        if (main2Wave === 5) {
+            e._stopX = 750;  // oleada final: frenan casi a la mitad
+        }
     }
 
     let waveEl = document.getElementById('wave-counter');
@@ -282,7 +320,7 @@ function fireMain2EnemyBullet(enemy) {
 function takeDamage2(amount) {
     if (main2Dead || main2PlayerInvincible) return;
 
-    main2HP = Math.max(0, main2HP - amount);
+    main2HP = Math.max(0, main2HP - Math.round(amount * main2DamageTakenMult));
     updateMain2HUD();
 
     // Asegurar que el sprite siga visible (por si physics lo ocultó)
@@ -349,6 +387,23 @@ function gameOver2() {
         });
 }
 
+function victoryWave2() {
+    if (main2Dead) return;
+    main2Dead = true;
+    main2Enemies.setAll('body.velocity.x', 0);
+    main2Enemies.setAll('body.velocity.y', 0);
+    main2EnemyBullets.callAll('kill', null);
+
+    game.add.tween(main2Music)
+        .to({ volume: 0 }, 1500, Phaser.Easing.Linear.None, true)
+        .onComplete.add(() => {
+            main2Music.stop();
+            let hud = document.getElementById('hud-main2');
+            if (hud) hud.style.display = 'none';
+            game.state.start('ending');
+        });
+}
+
 function setupMain2Voice() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) return;
@@ -363,6 +418,10 @@ function setupMain2Voice() {
 
         rec.onresult = (e) => {
             const txt = e.results[0][0].transcript.toLowerCase().trim();
+            if (txt.includes('sprint') && !main2Dead) {
+                main2SprintToggle = main2SprintStamina > 0 ? !main2SprintToggle : false;
+                return;
+            }
             if ((txt.includes('auxilio') || txt.includes('andanada')) && specialReady && !specialActive && !main2Dead) {
                 activateSpecial(main2Player, [main2Enemies]); return;
             }
