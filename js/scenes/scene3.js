@@ -143,8 +143,6 @@ let scene3State = {
         scene3EnterKey = game.input.keyboard.addKey(Phaser.Keyboard.ENTER);
         game.input.onDown.add(advanceScene3Dialogue);
 
-        setupScene3Voice();
-
         // Animación de entrada del Huáscar
         game.add.tween(scene3Huascar)
             .to({ x: 600 }, 2000, Phaser.Easing.Quadratic.Out, true)

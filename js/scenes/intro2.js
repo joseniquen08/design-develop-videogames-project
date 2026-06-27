@@ -1,4 +1,8 @@
 let intro2State = {
+    preload: () => {
+        game.load.image('ancla', 'img/Ancla.png');
+    },
+
     create: () => {
         hudInGame.style.display = "none";
 
@@ -27,6 +31,9 @@ let intro2State = {
         });
         line3.anchor.setTo(0.5);
         line3.alpha = 0;
+
+        createAnchorAnimation(game);
+        setupSkipVoice();
 
         game.add.tween(line1)
             .to({ alpha: 1 }, 500, Phaser.Easing.Linear.None, true, 0)

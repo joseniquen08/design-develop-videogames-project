@@ -1,6 +1,10 @@
 let hudInGame = document.getElementById('hud-in-game');
 
 let introState = {
+    preload: () => {
+        game.load.image('ancla', 'img/Ancla.png');
+    },
+
     create: () => {
         hudInGame.style.display = "none";
 
@@ -33,6 +37,9 @@ let introState = {
         });
         desc.anchor.setTo(0.5);
         desc.alpha = 0;
+
+        createAnchorAnimation(game);
+        setupSkipVoice();
 
         // fade-in secuencial
         game.add.tween(fecha)

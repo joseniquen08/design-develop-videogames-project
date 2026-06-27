@@ -109,9 +109,6 @@ let scene2State = {
         scene2EnterKey = game.input.keyboard.addKey(Phaser.Keyboard.ENTER);
         game.input.onDown.add(advanceScene2Dialogue);
 
-        // Voz
-        setupScene2Voice();
-
         game.time.events.add(1500, () => showScene2Dialogue(0));
     },
 

@@ -115,9 +115,6 @@ let scene1State = {
         scene1EnterKey = game.input.keyboard.addKey(Phaser.Keyboard.ENTER);
         game.input.onDown.add(advanceDialogue);
 
-        // Voz
-        setupScene1Voice();
-
         // Primer diálogo con delay para que se vea a Grau primero
         game.time.events.add(1500, () => showDialogue(0));
     },
