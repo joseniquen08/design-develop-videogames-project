@@ -11,7 +11,7 @@ let endingState = {
 
         let endingMusic = game.add.audio('endingMusic');
         endingMusic.loop = true;
-        endingMusic.volume = 0.5;
+        endingMusic.volume = 0.5 * menuMusicVolume;
         endingMusic.play();
 
         // Fondo negro

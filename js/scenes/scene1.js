@@ -31,13 +31,13 @@ let scene1State = {
     create: () => {
         let music = game.add.audio('bgMusic');
         music.loop = true;
-        music.volume = 0.05;
+        music.volume = 0.05 * menuMusicVolume;
         music.play();
 
         game.scene1Music = music;
 
         textBlip = game.add.audio('textSound');
-        textBlip.volume = 0.8
+        textBlip.volume = 0.8 * menuSfxVolume
         textBlip.loop = true;
 
         // remove hud from battle in this scene

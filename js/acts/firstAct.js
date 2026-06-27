@@ -87,7 +87,7 @@ let firstActState = {
 
         fa1Music = game.add.audio('bgMusicFa1');
         fa1Music.loop = true;
-        fa1Music.volume = 0.3;
+        fa1Music.volume = 0.3 * menuMusicVolume;
         fa1Music.play();
 
         fa1Background = game.add.tileSprite(0, 0, 1717, 916, 'bg-fa1');
@@ -503,7 +503,7 @@ function fireFa1PlayerBullet() {
     fa1PlayerBullet.body.velocity.x = 600;
     fa1PlayerBullet.body.velocity.y = 0;
     fa1PlayerBullet.exists = true;
-    game.sound.play('canonEfecto', 0.6);
+    game.sound.play('canonEfecto', 0.6 * menuSfxVolume);
 }
 
 function fireFa1EnemyBullet(enemy) {
@@ -617,11 +617,11 @@ function setupFa1Voice() {
 
         const rec = new SpeechRecognition();
         rec.lang = 'es-PE';
-        rec.continuous = false;
+        rec.continuous = true;
         rec.interimResults = false;
 
         rec.onresult = (e) => {
-            const txt = e.results[0][0].transcript.toLowerCase().trim();
+            const txt = e.results[e.results.length - 1][0].transcript.toLowerCase().trim();
             if (txt.includes('pausa')) { pauseFa1(); return; }
             if (txt.includes('continuar')) { resumeFa1(); return; }
             if (txt.includes('sprint') && !fa1Dead && !fa1Paused) {
@@ -635,17 +635,19 @@ function setupFa1Voice() {
                 } : null);
                 return;
             }
-            if ((txt.includes('fuego') || txt.includes('dispara')) && !fa1PlayerBulletActive && !fa1Dead && !fa1Paused) {
+            if (txt.includes('dispara') && !fa1PlayerBulletActive && !fa1Dead && !fa1Paused) {
                 fireFa1PlayerBullet();
             }
         };
 
         rec.onerror = (ev) => {
-            const delay = (ev.error === 'no-speech' || ev.error === 'aborted') ? 200 : 400;
-            setTimeout(startSession, delay);
+            if (ev.error === 'aborted') return;
+            setTimeout(startSession, 500);
         };
 
-        rec.onend = () => { setTimeout(startSession, 200); };
+        rec.onend = () => {
+            if (game.state.current === 'firstAct') setTimeout(startSession, 300);
+        };
 
         try { rec.start(); } catch (e) { setTimeout(startSession, 300); }
     }

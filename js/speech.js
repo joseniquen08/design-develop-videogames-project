@@ -17,11 +17,11 @@ function setupSkipVoice() {
 
         const rec = new SpeechRecognition();
         rec.lang = 'es-PE';
-        rec.continuous = false;
+        rec.continuous = true;
         rec.interimResults = false;
 
         rec.onresult = (e) => {
-            const txt = e.results[0][0].transcript.toLowerCase().trim();
+            const txt = e.results[e.results.length - 1][0].transcript.toLowerCase().trim();
             const cur = game.state.current;
 
             if (txt.includes('saltar') || txt.includes('skip')) {
@@ -50,13 +50,13 @@ function setupSkipVoice() {
         };
 
         rec.onerror = (ev) => {
-            const delay = (ev.error === 'no-speech' || ev.error === 'aborted') ? 200 : 400;
-            setTimeout(startSession, delay);
+            if (ev.error === 'aborted') return;
+            setTimeout(startSession, 500);
         };
 
         rec.onend = () => {
             if (activeStates.includes(game.state.current)) {
-                setTimeout(startSession, 200);
+                setTimeout(startSession, 300);
             }
         };
 

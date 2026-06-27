@@ -2,8 +2,8 @@ let _sndVoz = null;
 let _sndCanones = null;
 
 function initSpecialSounds() {
-    _sndVoz = game.add.audio('vozCanones', 0.8);
-    _sndCanones = game.add.audio('canoonesSonido', 0.6);
+    _sndVoz = game.add.audio('vozCanones', 0.8 * menuSfxVolume);
+    _sndCanones = game.add.audio('canoonesSonido', 0.6 * menuSfxVolume);
 }
 
 function updateSpecialBar() {
@@ -73,11 +73,11 @@ function activateSpecial(playerSprite, enemyGroups, bossHitConfig) {
     specialBarValue = 0;
     updateSpecialBar();
 
-    if (_sndVoz) _sndVoz.play(); else game.sound.play('vozCanones', 0.8);
+    if (_sndVoz) _sndVoz.play(); else game.sound.play('vozCanones', 0.8 * menuSfxVolume);
 
     const VOZ_DURATION = 2000;
     game.time.events.add(VOZ_DURATION, function () {
-        if (_sndCanones) _sndCanones.play(); else game.sound.play('canoonesSonido', 0.6);
+        if (_sndCanones) _sndCanones.play(); else game.sound.play('canoonesSonido', 0.6 * menuSfxVolume);
         game.camera.shake(0.025, 500);
 
         let txt = game.add.text(1717 / 2, 916 / 2 - 100, '¡AYUDA NAVAL!', {

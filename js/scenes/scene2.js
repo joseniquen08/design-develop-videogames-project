@@ -43,7 +43,7 @@ let scene2State = {
         overlay.endFill();
 
         scene2TextBlip = game.add.audio('textSound');
-        scene2TextBlip.volume = 0.8;
+        scene2TextBlip.volume = 0.8 * menuSfxVolume;
         scene2TextBlip.loop = true;
 
         // Sprite Grau — izquierda

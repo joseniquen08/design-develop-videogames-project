@@ -146,6 +146,7 @@ function menuShowSettingsScreen() {
     let musicDown = menuCreateButton(1717 / 2 + 30, 300, '-', () => {
         menuMusicVolume = Math.max(0, +(menuMusicVolume - 0.1).toFixed(1));
         musicVal.setText(Math.round(menuMusicVolume * 100) + '%');
+        if (menuMusic) menuMusic.volume = menuMusicVolume;
     });
     menuSettingsElements.push(musicDown);
 
@@ -159,6 +160,7 @@ function menuShowSettingsScreen() {
     let musicUp = menuCreateButton(1717 / 2 + 190, 300, '+', () => {
         menuMusicVolume = Math.min(1, +(menuMusicVolume + 0.1).toFixed(1));
         musicVal.setText(Math.round(menuMusicVolume * 100) + '%');
+        if (menuMusic) menuMusic.volume = menuMusicVolume;
     });
     menuSettingsElements.push(musicUp);
 
@@ -211,11 +213,11 @@ function setupMenuVoice() {
 
         const rec = new SpeechRecognition();
         rec.lang = 'es-PE';
-        rec.continuous = false;
+        rec.continuous = true;
         rec.interimResults = false;
 
         rec.onresult = (ev) => {
-            const txt = ev.results[0][0].transcript.toLowerCase().trim();
+            const txt = ev.results[ev.results.length - 1][0].transcript.toLowerCase().trim();
 
             if (menuActiveScreen === 'main') {
                 if (txt.includes('iniciar') || txt.includes('jugar')) { menuShowDifficultyScreen(); return; }
@@ -235,19 +237,21 @@ function setupMenuVoice() {
                 const efectoWord = txt.includes('efecto');
                 const up   = txt.includes('subir') || txt.includes('más') || txt.includes('mas');
                 const down = txt.includes('bajar') || txt.includes('menos');
-                if (musicWord && up)   { menuMusicVolume = Math.min(1, +(menuMusicVolume + 0.1).toFixed(1)); if (typeof bgMusic !== 'undefined' && bgMusic) bgMusic.volume = menuMusicVolume; menuShowSettingsScreen(); return; }
-                if (musicWord && down) { menuMusicVolume = Math.max(0, +(menuMusicVolume - 0.1).toFixed(1)); if (typeof bgMusic !== 'undefined' && bgMusic) bgMusic.volume = menuMusicVolume; menuShowSettingsScreen(); return; }
+                if (musicWord && up)   { menuMusicVolume = Math.min(1, +(menuMusicVolume + 0.1).toFixed(1)); if (menuMusic) menuMusic.volume = menuMusicVolume; menuShowSettingsScreen(); return; }
+                if (musicWord && down) { menuMusicVolume = Math.max(0, +(menuMusicVolume - 0.1).toFixed(1)); if (menuMusic) menuMusic.volume = menuMusicVolume; menuShowSettingsScreen(); return; }
                 if (efectoWord && up)   { menuSfxVolume = Math.min(1, +(menuSfxVolume + 0.1).toFixed(1)); menuShowSettingsScreen(); return; }
                 if (efectoWord && down) { menuSfxVolume = Math.max(0, +(menuSfxVolume - 0.1).toFixed(1)); menuShowSettingsScreen(); return; }
             }
         };
 
         rec.onerror = (ev) => {
-            const delay = (ev.error === 'no-speech' || ev.error === 'aborted') ? 200 : 400;
-            setTimeout(startSession, delay);
+            if (ev.error === 'aborted') return;
+            setTimeout(startSession, 500);
         };
 
-        rec.onend = () => { setTimeout(startSession, 200); };
+        rec.onend = () => {
+            if (game.state.current === 'menu') setTimeout(startSession, 300);
+        };
 
         try { rec.start(); } catch (e) { setTimeout(startSession, 300); }
     }
@@ -268,7 +272,7 @@ let menuState = {
         setupMenuVoice();
         menuMusic = game.add.audio('menuMusic');
         menuMusic.loop = true;
-        menuMusic.volume = 1;
+        menuMusic.volume = menuMusicVolume;
         menuMusic.play();
         
         // Ocultar HUDs

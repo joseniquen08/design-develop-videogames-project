@@ -47,17 +47,17 @@ let scene3State = {
         // La música arranca DESPUÉS del alert, no al inicio de la escena
         scene3Music = game.add.audio('scene3Music');
         scene3Music.loop = true;
-        scene3Music.volume = 0.5;
+        scene3Music.volume = 0.5 * menuMusicVolume;
 
         scene3TextBlip = game.add.audio('textSound');
-        scene3TextBlip.volume = 0.8;
+        scene3TextBlip.volume = 0.8 * menuSfxVolume;
         scene3TextBlip.loop = true;
 
         scene3BoomSound = game.add.audio('boomSound');
-        scene3BoomSound.volume = 0.9;
+        scene3BoomSound.volume = 0.9 * menuSfxVolume;
 
         scene3WaveSound = game.add.audio('waveSound');
-        scene3WaveSound.volume = 0.8;
+        scene3WaveSound.volume = 0.8 * menuSfxVolume;
 
         // Fondo oceánico
         scene3Background = game.add.tileSprite(0, 0, 1717, 916, 'bg-scene3');

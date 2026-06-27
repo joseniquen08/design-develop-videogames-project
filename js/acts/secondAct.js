@@ -69,7 +69,7 @@ let main2State = {
 
         main2Music = game.add.audio('bgMusic2');
         main2Music.loop = true;
-        main2Music.volume = 0.6;
+        main2Music.volume = 0.6 * menuMusicVolume;
         main2Music.play();
 
         main2Background = game.add.tileSprite(0, 0, 1717, 916, 'bg-main2');
@@ -300,7 +300,7 @@ function fireMain2PlayerBullet() {
     main2PlayerBullet.body.velocity.x = 600;
     main2PlayerBullet.body.velocity.y = 0;
     main2PlayerBullet.exists = true;
-    game.sound.play('canonEfecto', 0.6);
+    game.sound.play('canonEfecto', 0.6 * menuSfxVolume);
 }
 
 function fireMain2EnemyBullet(enemy) {
@@ -413,11 +413,11 @@ function setupMain2Voice() {
 
         const rec = new SpeechRecognition();
         rec.lang = 'es-PE';
-        rec.continuous = false;
+        rec.continuous = true;
         rec.interimResults = false;
 
         rec.onresult = (e) => {
-            const txt = e.results[0][0].transcript.toLowerCase().trim();
+            const txt = e.results[e.results.length - 1][0].transcript.toLowerCase().trim();
             if (txt.includes('sprint') && !main2Dead) {
                 main2SprintToggle = main2SprintStamina > 0 ? !main2SprintToggle : false;
                 return;
@@ -431,11 +431,13 @@ function setupMain2Voice() {
         };
 
         rec.onerror = (ev) => {
-            const delay = (ev.error === 'no-speech' || ev.error === 'aborted') ? 200 : 400;
-            setTimeout(startSession, delay);
+            if (ev.error === 'aborted') return;
+            setTimeout(startSession, 500);
         };
 
-        rec.onend = () => { setTimeout(startSession, 200); };
+        rec.onend = () => {
+            if (game.state.current === 'secondAct') setTimeout(startSession, 300);
+        };
 
         try { rec.start(); } catch (e) { setTimeout(startSession, 300); }
     }
